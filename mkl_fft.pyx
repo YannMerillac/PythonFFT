@@ -64,3 +64,30 @@ def ifft(complex64_t[:] x, complex64_t[:] y):
     cdef void* y_ptr = &y[0]
     DftiComputeBackward(handle, x_ptr, y_ptr)
     DftiFreeDescriptor(&handle)
+
+
+cdef class FFTHandler(object):
+    cdef DFTI_DESCRIPTOR_HANDLE handle
+    cdef public int N
+    
+    def __cinit__(self, N):
+        self.N = N
+        DftiCreateDescriptor(&self.handle, DFTI_SINGLE, DFTI_COMPLEX, 1, self.N)
+        
+    def __dealloc__(self):
+        DftiFreeDescriptor(&self.handle)
+
+    def fft(self, complex64_t[:] x, complex64_t[:] y):
+        DftiSetValue(self.handle, DFTI_PLACEMENT, DFTI_NOT_INPLACE)
+        DftiCommitDescriptor(self.handle)
+        cdef void* x_ptr = &x[0]
+        cdef void* y_ptr = &y[0]
+        DftiComputeForward(self.handle, x_ptr, y_ptr)
+
+    def ifft(self, complex64_t[:] x, complex64_t[:] y):
+        DftiSetValue(self.handle, DFTI_PLACEMENT, DFTI_NOT_INPLACE)
+        DftiSetValue(self.handle, DFTI_BACKWARD_SCALE, 1.0/self.N)
+        DftiCommitDescriptor(self.handle)
+        cdef void* x_ptr = &x[0]
+        cdef void* y_ptr = &y[0]
+        DftiComputeBackward(self.handle, x_ptr, y_ptr)
