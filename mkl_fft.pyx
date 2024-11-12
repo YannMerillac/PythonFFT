@@ -1,4 +1,5 @@
 from libc.stdlib cimport malloc, free
+import cython
 #cimport numpy as cnp
 #cnp.import_array()
 
@@ -37,6 +38,8 @@ cdef extern from "mkl.h":
 ctypedef double complex complex128_t
 ctypedef float complex complex64_t
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def fft(complex64_t[:] x, complex64_t[:] y):
     cdef int i
     cdef int n = x.shape[0]
@@ -51,6 +54,8 @@ def fft(complex64_t[:] x, complex64_t[:] y):
     DftiFreeDescriptor(&handle)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def ifft(complex64_t[:] x, complex64_t[:] y):
     cdef int i
     cdef int n = x.shape[0]
@@ -77,6 +82,8 @@ cdef class FFTHandler(object):
     def __dealloc__(self):
         DftiFreeDescriptor(&self.handle)
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     def fft(self, complex64_t[:] x, complex64_t[:] y):
         DftiSetValue(self.handle, DFTI_PLACEMENT, DFTI_NOT_INPLACE)
         DftiCommitDescriptor(self.handle)
@@ -84,6 +91,8 @@ cdef class FFTHandler(object):
         cdef void* y_ptr = &y[0]
         DftiComputeForward(self.handle, x_ptr, y_ptr)
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     def ifft(self, complex64_t[:] x, complex64_t[:] y):
         DftiSetValue(self.handle, DFTI_PLACEMENT, DFTI_NOT_INPLACE)
         DftiSetValue(self.handle, DFTI_BACKWARD_SCALE, 1.0/self.N)
